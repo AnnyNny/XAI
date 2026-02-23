@@ -31,7 +31,12 @@ warnings.filterwarnings('ignore', category=ConstantInputWarning)
 # ================== GLOBAL CONFIG ==================
 ALPHA = 0.05
 TRAINING_FRAC = 0.7
-PREFIX = "C:\\Users\\User\\tigramite\\tigramite\\tutorials\\causal_discovery\\"
+#PREFIX = "C:\\Users\\User\\tigramite\\tigramite\\tutorials\\causal_discovery\\"
+PREFIX = os.path.join(os.getcwd(), "causal_lab") + os.sep
+#PREFIX = os.path.join(os.getcwd(), "pepper_csv") + os.sep
+
+#PREFIX = os.path.join(os.getcwd(), "causal_lab") + os.sep
+
 TASK = "pepper"
 
 # ================================================================
@@ -116,6 +121,10 @@ def learn_causal_model(normal_csv_path: str, save_path: str):
     print(f"Computed tau_max = {tau_max} from dominant frequency {max_freq if freqs else 'N/A'}")
 
     # TODO: --- 5. Run PCMCI ---
+    dataframe = pp.DataFrame(train_sub[:, nonconst], var_names=list(df.columns[nonconst]))
+    cond_ind_test = ParCorr()
+    pcmci_obj = PCMCI(dataframe=dataframe, cond_ind_test=cond_ind_test,verbosity=1)
+    results = pcmci_obj.run_pcmci(tau_max=tau_max, pc_alpha=ALPHA)
 
     # --- 6. Save model for reuse ---
     np.savez(save_path,
@@ -144,6 +153,7 @@ def fit_normal_coeffs(normal_data: np.ndarray, causal_matrix: np.ndarray):
     fine_coeffs = {}
     for var in np.unique(indices[1, :]):
         # TODO: compute fine_coeffs[var]
+        pass
 
     return fine_coeffs, indices
 
