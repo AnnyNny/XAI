@@ -52,6 +52,8 @@ def set_seeds(seed=42):
 
 set_seeds(42)
 
+import os
+print("CWD:", os.getcwd())
 
 # -------------------------- DATA LOADING --------------------------
 def load_citylearn(building_id: int):
@@ -91,7 +93,33 @@ def fit_causal_model(df, target_col=TARGET, tau_max=MAX_TAU):
     """Fit Tigramite Prediction model using LinearRegression."""
 
     # TODO: fit the causal model using Tigramite and LinearRegression
+    T = len(df)
+    feature_names = df.columns.to_list()
+    target_idx = df.columns.get_loc(target_col)
 
+    df_np = df.to_numpy()
+    dataframe = pp.DataFrame(df_np)
+    
+    model = Prediction(
+        dataframe=dataframe,
+        train_indices=range(int(TRAIN_FRAC*T)),
+        test_indices=range(int((TRAIN_FRAC+0.1)*T), T),
+        prediction_model=LinearRegression(),
+        cond_ind_test=ParCorr(),
+        data_transform=StandardScaler(),
+        verbosity=1                  
+        )
+    
+    predictors = model.get_predictors(
+                  selected_targets=[target_idx],
+                  steps_ahead=1,
+                  tau_max=tau_max,
+                  pc_alpha=PC_ALPHA
+                  )
+    model.fit(target_predictors=predictors, 
+                selected_targets=[target_idx],
+                    tau_max=tau_max)
+    
     # Extract aligned true values
     pred = model.predict(target_idx)
     true_matrix = model.get_test_array()
@@ -216,6 +244,7 @@ def plot_predictions(true, pred_causal, pred_tcn, nmae_causal, nstd_causal, nmae
         ax.set_ylabel("Predicted Values")
     plt.suptitle("Causal vs Dilated-TCN Predictions")
     plt.tight_layout()
+    plt.savefig("predictions.png", dpi=200)
     plt.show()
 
 
@@ -253,6 +282,7 @@ def plot_feature_importance(causal_feat_names, causal_importance, tcn_feat_names
     sns.barplot(x=tcn_importance_top, y=tcn_feat_names_top, ax=ax[1], color="orange")
     ax[1].set_title("Dilated-TCN: Input Importance (Top Features)")
     plt.tight_layout()
+    plt.savefig("feature_importance.png", dpi=200)
     plt.show()
 
 
